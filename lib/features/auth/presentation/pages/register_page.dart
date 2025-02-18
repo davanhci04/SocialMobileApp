@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../comoinents/my_button.dart';
 import '../comoinents/my_text_field.dart';
+import '../cubits/auth_cubits.dart';
 
 class RegisterPage extends StatefulWidget {
   final void Function()? togglePages;
@@ -11,10 +13,47 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  late final _authCubit = BlocProvider.of<AuthCubit>(context);
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
+  void register() {
+    final String name = nameController.text;
+    final String email = emailController.text;
+    final String password = passwordController.text;
+    final String confirmPassword = confirmPasswordController.text;
+
+    if (email.isNotEmpty && password.isNotEmpty && confirmPassword.isNotEmpty) {
+      if (password == confirmPassword) {
+        // Sử dụng BlocProvider để lấy AuthCubit
+
+        _authCubit.registerWithEmailAndPassword(name, email, password);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Passwords do not match!"),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please fill all the fields"),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +118,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 // Register button
                 MyButton(
-                  onTap: () {},
+                  onTap: register,
                   text: "Register",
                 ),
                 const SizedBox(height: 20),

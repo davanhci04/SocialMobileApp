@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled/features/auth/data/firebase_auth_repo.dart';
@@ -23,14 +22,12 @@ class MyApp extends StatelessWidget {
         theme: lightMode,
         home: BlocConsumer<AuthCubit, AuthState>(
           builder: (context, authState) {
-            print(authState);
             if (authState is Unauthenticated) {
               return const AuthPage();
             }
             if (authState is Authenticated) {
               return const HomePage();
-            }
-            else{
+            } else {
               return const Scaffold(
                 body: Center(
                   child: CircularProgressIndicator(),
@@ -38,7 +35,15 @@ class MyApp extends StatelessWidget {
               );
             }
           },
-          listener: (context, state) {},
+          listener: (context, state) {
+            if (state is AuthError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                ),
+              );
+            }
+          },
         ),
       ),
     );

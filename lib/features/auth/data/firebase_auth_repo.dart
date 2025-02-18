@@ -1,60 +1,79 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:untitled/features/auth/domain/repos/auth_repo.dart';
 import 'package:untitled/features/auth/domain/entities/app_user.dart';
 
+import '../presentation/cubits/auth_states.dart';
+
 class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
 
   @override
-  Future<AppUser?> loginWithEmailPassword(String email, String password) async  {
+  Future<AppUser?> loginWithEmailPassword(String email, String password) async {
     try {
+      email = email.trim(); // Xóa khoảng trắng đầu/cuối email
+
       UserCredential userCredential = await firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
 
-      AppUser  user = AppUser(
+      AppUser user = AppUser(
         uid: userCredential.user!.uid,
         email: email,
         name: '',
       );
       return user;
     } catch (e) {
-      throw Exception("Login failed:+e.toString()");
+      print(" Login failed: $e"); // Log lỗi để debug
+      throw Exception("Login failed: $e");
     }
   }
 
   @override
-  Future<AppUser?> registerWithEmailPassword(String email, String password, String name) async {
+  Future<AppUser?> registerWithEmailPassword({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
     try {
-      UserCredential userCredential = await firebaseAuth
-          .createUserWithEmailAndPassword(email: email, password: password);
+      email = email.trim(); // Xóa khoảng trắng đầu/cuối email
 
-      AppUser  user = AppUser(
-        uid: userCredential.user!.uid,
-        email: email,
-        name: name,
-      );
-      return user;
+      final userCredential = await firebaseAuth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      if (userCredential.user != null) {
+        AppUser user = AppUser(
+          uid: userCredential.user!.uid,
+          email: email,
+          name: name,
+        );
+
+        // Lưu thông tin user vào Firestore
+        await firebaseFirestore
+            .collection('users')
+            .doc(user.uid)
+            .set(user.toJson());
+        return user;
+      }
+
+      return null;
     } catch (e) {
-      throw Exception("Login failed:+e.toString()");
+      print(" Registration failed: $e"); // Log lỗi để debug
+      throw Exception("Registration failed: $e");
+    }
+  }
+
+  @override
+  Future<AppUser?> getCurrentUser() async {
+    final user = firebaseAuth.currentUser;
+    if (user != null && user.email != null) {
+      return AppUser(uid: user.uid, email: user.email!.trim(), name: '');
+    } else {
+      return null;
     }
   }
 
   @override
   Future<void> logout() async {
     await firebaseAuth.signOut();
-  }
-
-  @override
-  Future<AppUser?> getCurrentUser() async {
-   final firebaseUser = firebaseAuth.currentUser;
-
-   if(firebaseUser == null){
-     return null;
-   }
-   return AppUser(
-     uid: firebaseUser.uid,
-     email: firebaseUser.email!,
-     name: '',
-   );
   }
 }
