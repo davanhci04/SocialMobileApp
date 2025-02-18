@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled/features/auth/presentation/comoinents/my_button.dart';
 import 'package:untitled/features/auth/presentation/comoinents/my_text_field.dart';
+
+import '../cubits/auth_cubits.dart';
 
 class LoginPage extends StatefulWidget {
   final void Function()? togglePages;
@@ -14,7 +17,36 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  void login() {
+   // prepare email and pw for login
+    final String email = emailController.text;
+    final String password = passwordController.text;
+    // auth cubits
+    final authCubit = context.read<AuthCubit>();
+
+    // ensure that email and password are not empty
+    if(email.isNotEmpty && password.isNotEmpty) {
+      authCubit.loginWithEmailAndPassword(email, password);
+
+    }
+
+    // display errors if some fields are empty
+    else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter email and password"),
+        ),
+      );
+    }
+}
+
   @override
+
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -61,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 // Login button
                 MyButton(
-                  onTap: () {},
+                  onTap: login,
                   text: "Login",
                 ),
                 const SizedBox(height: 30),
