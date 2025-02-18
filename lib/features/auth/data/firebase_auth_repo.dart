@@ -6,17 +6,19 @@ class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
 
   @override
-  Future<AppUser?> loginWithEmailPassword(String email, String password) async {
+  Future<AppUser?> loginWithEmailPassword(String email, String password) async  {
     try {
       UserCredential userCredential = await firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
 
-      User? firebaseUser = userCredential.user;
-      if (firebaseUser == null) return null;
-
-      return AppUser(uid: firebaseUser.uid, email: firebaseUser.email ?? '', name: '');
+      AppUser  user = AppUser(
+        uid: userCredential.user!.uid,
+        email: email,
+        name: '',
+      );
+      return user;
     } catch (e) {
-      throw Exception('Login failed: ${e.toString()}');
+      throw Exception("Login failed:+e.toString()");
     }
   }
 
@@ -26,12 +28,14 @@ class FirebaseAuthRepo implements AuthRepo {
       UserCredential userCredential = await firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      User? firebaseUser = userCredential.user;
-      if (firebaseUser == null) return null;
-
-      return AppUser(uid: firebaseUser.uid, email: firebaseUser.email ?? '', name: '');
+      AppUser  user = AppUser(
+        uid: userCredential.user!.uid,
+        email: email,
+        name: name,
+      );
+      return user;
     } catch (e) {
-      throw Exception('Registration failed: ${e.toString()}');
+      throw Exception("Login failed:+e.toString()");
     }
   }
 
@@ -42,9 +46,15 @@ class FirebaseAuthRepo implements AuthRepo {
 
   @override
   Future<AppUser?> getCurrentUser() async {
-    User? firebaseUser = firebaseAuth.currentUser;
-    if (firebaseUser == null) return null;
+   final firebaseUser = firebaseAuth.currentUser;
 
-    return AppUser(uid: firebaseUser.uid, email: firebaseUser.email ?? '', name: '');
+   if(firebaseUser == null){
+     return null;
+   }
+   return AppUser(
+     uid: firebaseUser.uid,
+     email: firebaseUser.email!,
+     name: '',
+   );
   }
 }
