@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled/features/auth/presentation/cubits/auth_cubits.dart';
 
+import '../components/my_drawer.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -10,16 +12,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  //build ui
   @override
   Widget build(BuildContext context) {
+    // Scaffold
     return Scaffold(
-      appBar:AppBar(
+      // app bar
+      appBar: AppBar(
         title: const Text("Home"),
-          centerTitle: true,
-          actions:  [
-            IconButton(onPressed: () {context.read<AuthCubit>().logout();}, icon: Icon(Icons.logout),)
-        ],
+        centerTitle: true,
       ),
+      // drawer
+
+      drawer: MyDrawer(),
     );
   }
 }
