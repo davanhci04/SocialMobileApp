@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled/features/profile/domain/entities/profile_user.dart';
@@ -15,17 +18,55 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
+
+  //mobile image pick
+  PlatformFile? imagePickedFile;
+
+  // web image pick
+  Uint8List? webImage;
+
+  // pick image
+  Future<void> pickImage() async{
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: kIsWeb,
+    );
+
+    if (result != null){
+      setState(() {
+        imagePickedFile = result.files.first;
+
+        if(kIsWeb){
+          webImage = imagePickedFile!.bytes;
+        }
+      });
+    }
+  }
+  
   final TextEditingController bioController = TextEditingController();
 
   // Cập nhật profile
   void updateProfile() {
     final profileCubit = context.read<ProfileCubit>();
 
-    if (bioController.text.isNotEmpty) {
+    //prepare images
+    final String uid = widget.user.uid;
+    final imageMobilePath = kIsWeb ? null : imagePickedFile?.path;
+    final imageWebBytes = kIsWeb ? imagePickedFile?.bytes : null;
+    final String? newBio = bioController.text.isNotEmpty ? bioController.text : null;
+
+    // only update profile if there is something to update
+    if (imagePickedFile != null || newBio != null) {
       profileCubit.updateProfile(
-        widget.user.uid,
-        bioController.text, null, null
+        uid,
+        newBio,
+        imageWebBytes,
+        imageMobilePath,
         );
+    }
+
+    else {
+      Navigator.pop(context);
     }
   }
 

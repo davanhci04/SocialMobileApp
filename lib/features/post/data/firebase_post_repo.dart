@@ -28,7 +28,7 @@ class FirebasePostRepo  implements PostRepo{
   }
 
   @override
-  Future<List<Post>> fetchAllPost() async{
+  Future<List<Post>> fetchAllPosts() async{
     try {
       // get all posts with most recent posts at the timestamp
       final postsSnapshot = await postsCollection.orderBy('timestamp', descending: true).get(); 
