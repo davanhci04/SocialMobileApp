@@ -22,7 +22,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final profileCubit = context.read<ProfileCubit>();
 
     if (bioController.text.isNotEmpty) {
-      profileCubit.updateProfile(widget.user.uid, bioController.text);
+      profileCubit.updateProfile(
+        widget.user.uid,
+        bioController.text, null, null
+        );
     }
   }
 
