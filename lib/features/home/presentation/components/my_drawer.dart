@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled/features/auth/presentation/cubits/auth_cubits.dart';
 import 'package:untitled/features/home/presentation/components/my_drawer_tile.dart';
+import 'package:untitled/features/search/presentation/pages/search_page.dart';
+import 'package:untitled/features/settings/pages/settings_page.dart';
 
 import '../../../profile/presentation/pages/profile_page.dart';
 
@@ -26,10 +28,7 @@ class MyDrawer extends StatelessWidget {
                 ),
               ),
               // Divider line
-              Divider(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondary), // Fix: Thêm dấu phẩy
+              Divider(color: Theme.of(context).colorScheme.secondary), // Fix: Thêm dấu phẩy
 
               // Home list tile
               MyDrawerTile(
@@ -45,10 +44,15 @@ class MyDrawer extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context).pop();
 
-                 final user = context.read<AuthCubit>().currentUser;
-                 String? uid = user!.uid;
+                  final user = context.read<AuthCubit>().currentUser;
+                  String? uid = user!.uid;
 
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfilePage(uid: uid,)));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfilePage(
+                                uid: uid,
+                              )));
                 },
               ),
 
@@ -56,14 +60,14 @@ class MyDrawer extends StatelessWidget {
               MyDrawerTile(
                 title: "S E A R C H",
                 icon: Icons.search,
-                onTap: () {},
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchPage())),
               ),
 
               // Settings list tile
               MyDrawerTile(
                 title: "S E T T I N G S",
                 icon: Icons.settings,
-                onTap: () {},
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage())),
               ),
               const Spacer(),
               MyDrawerTile(

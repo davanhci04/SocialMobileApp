@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:social_app_tute/features/profile/domain/entities/profile_user.dart';
-import 'package:social_app_tute/features/search/domain/repos/search_repo.dart';
+import 'package:untitled/features/profile/domain/entities/profile_user.dart';
+import 'package:untitled/features/search/domain/search_repo.dart';
 
 class FirebaseSearchRepo implements SearchRepo {
   @override
@@ -9,12 +9,13 @@ class FirebaseSearchRepo implements SearchRepo {
       final result = await FirebaseFirestore.instance
           .collection("users")
           .where("name", isGreaterThanOrEqualTo: query)
-          .where("name", isLessThanOrEqualTo: query + "\uf8ff")
+          .where(
+            "name",
+            isLessThanOrEqualTo: "$query\uf8ff",
+          )
           .get();
 
-      return result.docs
-          .map((doc) => ProfileUser.fromJson(doc.data()))
-          .toList();
+      return result.docs.map((doc) => ProfileUser.fromJson(doc.data())).toList();
     } catch (e) {
       throw Exception("Error searching users: $e");
     }

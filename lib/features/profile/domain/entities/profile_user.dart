@@ -3,6 +3,8 @@ import 'package:untitled/features/auth/domain/entities/app_user.dart';
 class ProfileUser extends AppUser {
   final String bio;
   final String profileImageUrl;
+  final List<String> followers;
+  final List<String> following;
 
   ProfileUser({
     required super.uid,
@@ -10,19 +12,30 @@ class ProfileUser extends AppUser {
     required super.name,
     required this.bio,
     required this.profileImageUrl,
+    required this.followers,
+    required this.following,
   });
 
   // Cập nhật người dùng hồ sơ
-  ProfileUser copyWith({String? bio, String? profileImageUrl}) {
+  ProfileUser copyWith({
+    String? bio,
+    String? profileImageUrl,
+    List<String>? newFollowers,
+    List<String>? newFollowing,
+  }) {
     return ProfileUser(
       uid: this.uid,
       email: this.email,
       name: this.name,
-      bio: bio ?? this.bio,  // ✅ Dùng 'bio' thay vì 'newBio'
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl, // ✅ Đồng bộ tên
+      bio: bio ?? this.bio,
+      // ✅ Dùng 'bio' thay vì 'newBio'
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      // ✅ Đồng bộ tên
+      followers: newFollowers ?? followers,
+      // ✅ Đồng bộ tên
+      following: newFollowing ?? following, // ✅ Đồng bộ tên
     );
   }
-
 
   // Convert ProfileUser -> JSON
   Map<String, dynamic> toJson() {
@@ -32,6 +45,8 @@ class ProfileUser extends AppUser {
       'name': name,
       'bio': bio,
       'profileImageUrl': profileImageUrl,
+      'followers': followers,
+      'following': following,
     };
   }
 
@@ -43,6 +58,8 @@ class ProfileUser extends AppUser {
       name: json['name'] ?? '',
       bio: json['bio'] ?? '',
       profileImageUrl: json['profileImageUrl'] ?? '',
+      followers: List<String>.from(json['followers'] ?? []),
+      following: List<String>.from(json['following'] ?? []),
     );
   }
 }

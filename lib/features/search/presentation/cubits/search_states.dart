@@ -1,4 +1,5 @@
-import 'package:social_app_tute/features/profile/domain/entities/profile_user.dart';
+
+import 'package:untitled/features/profile/domain/entities/profile_user.dart';
 
 abstract class SearchState {}
 

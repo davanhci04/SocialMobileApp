@@ -1,44 +1,44 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:untitled/features/storage/domain/storage_repo.dart';
 
-class FirebaseStorageRepo implements StorageRepo{
-
-  final FirebaseStorage storage = FirebaseStorage.instance;
+class FirebaseStorageRepo implements StorageRepo {
+  final storage = Supabase.instance.client.storage;
 
   @override
-  Future<String?> uploadProfileImageMobile(String path, String filename) {
-    // TODO: implement uploadProfileImageMobile
-    throw UnimplementedError();
+  Future<String?> uploadPostImageMobile(String path, String fileName) {
+    return _uploadFile(path, fileName, 'post_images');
   }
 
   @override
-  Future<String?> uploadProfileImageWeb(Uint8List fileBytes, String filename) {
-    // TODO: implement uploadProfileImageWeb
-    throw UnimplementedError();
+  Future<String?> uploadPostImageWeb(Uint8List fileBytes, String fileName) {
+    return _uploadFileBytes(fileBytes, fileName, 'post_images');
   }
 
-  /*
+  @override
+  Future<String?> uploadProfileImageMobile(String path, String fileName) {
+    return _uploadFile(path, fileName, 'profile_images');
+  }
 
-  HELPER METHODS - to upload files to storage
+  @override
+  Future<String?> uploadProfileImageWeb(Uint8List fileBytes, String fileName) {
+    return _uploadFileBytes(fileBytes, fileName, 'profile_images');
+  }
 
-  */
-
-  // mobile platforms (file)
-  Future<String?> _uploadFile(String path, String filename, String folder) async{
+// mobile platforms (file)
+  Future<String?> _uploadFile(String path, String filename, String folder) async {
     try {
-      // get file
+      // Lấy file
       final file = File(path);
+      final pathNew = '$folder/$filename';
 
-      // fine place to store
-      final storageRef = storage.ref().child('$folder/$filename');
+      // Upload file
+      await storage.from('images').upload(pathNew, file);
 
-      // upload
-      final uploadTask = await storageRef.putFile(file);
-
-      // get image download url
-      final downloadUrl = await uploadTask.ref.getDownloadUrl();
+      // Lấy URL công khai
+      final downloadUrl = storage.from('images').getPublicUrl(pathNew);
 
       return downloadUrl;
     } catch (e) {
@@ -46,18 +46,15 @@ class FirebaseStorageRepo implements StorageRepo{
     }
   }
 
-  // web platforms (bytes)
-  Future<String?> _uploadFileBytes(Uint8List fileBytes, String filename, String folder) async{
+// web platforms (bytes)
+  Future<String?> _uploadFileBytes(Uint8List fileBytes, String filename, String folder) async {
     try {
+      // Đường dẫn lưu trữ trong bucket
+      final pathNew = '$folder/$filename';
 
-      // fine place to store
-      final storageRef = storage.ref().child('$folder/$filename');
-
-      // upload
-      final uploadTask = await storageRef.putData(fileBytes);
-
-      // get image download url
-      final downloadUrl = await uploadTask.ref.getDownloadUrl();
+      await storage.from('images').uploadBinary(pathNew, fileBytes);
+      // Lấy URL công khai
+      final downloadUrl = storage.from('images').getPublicUrl(pathNew);
 
       return downloadUrl;
     } catch (e) {

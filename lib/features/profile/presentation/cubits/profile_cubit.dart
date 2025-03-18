@@ -1,15 +1,20 @@
 import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:untitled/features/profile/domain/entities/profile_user.dart';
 import 'package:untitled/features/profile/presentation/cubits/profile_states.dart';
 import 'package:untitled/features/storage/domain/storage_repo.dart';
+
 import '../../domain/repos/profile_repo.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   final ProfileRepo profileRepo;
   final StorageRepo storageRepo;
 
-  ProfileCubit({required this.profileRepo, required this.storageRepo}) : super(ProfileInitial());
+  ProfileCubit({
+    required this.profileRepo,
+    required this.storageRepo,
+  }) : super(ProfileInitial());
 
   Future<void> fetchUserProfile(String uid) async {
     try {
@@ -26,12 +31,15 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  Future<void> updateProfile(
-    String uid,
-    String? newBio,
-    Uint8List? imageWebBytes,
-    String? imageMobilePath,
-  ) async {
+  Future<ProfileUser?> getUserProfile(String uid) async {
+    final user = await profileRepo.fetchUserProfile(uid);
+    return user;
+  }
+
+  Future<void> updateProfile(String uid,
+      String? newBio,
+      Uint8List? imageWebBytes,
+      String? imageMobilePath,) async {
     emit(ProfileLoading());
     try {
       final currentUser = await profileRepo.fetchUserProfile(uid);
@@ -70,6 +78,15 @@ class ProfileCubit extends Cubit<ProfileState> {
       await fetchUserProfile(uid);
     } catch (e) {
       emit(ProfileError(message: "Error updating profile: $e"));
+    }
+  }
+
+  Future<void> toggleFollow(String currentUserId, String targetUserId) async {
+    try {
+      await profileRepo.toggleFollow(currentUserId, targetUserId);
+      await fetchUserProfile(targetUserId);
+    }catch(e){
+      emit(ProfileError(message: "Error toggling follow: $e"));
     }
   }
 }
