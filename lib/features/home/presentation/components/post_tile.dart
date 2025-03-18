@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled/features/auth/domain/entities/app_user.dart';
-import 'package:untitled/features/auth/presentation/comoinents/my_text_field.dart';
 import 'package:untitled/features/auth/presentation/cubits/auth_cubits.dart';
 import 'package:untitled/features/home/presentation/components/comment_tile.dart';
 import 'package:untitled/features/post/domain/entities/comment.dart';
@@ -28,24 +27,28 @@ class _PostTileState extends State<PostTile> {
   late final profileCubit = context.read<ProfileCubit>();
 
   bool isOwnPost = false;
-
   AppUser? currentUser;
-
   ProfileUser? postUser;
-
-
   bool useDateOnly = false;
+
+  final commentTextController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     getCurrentUser();
+    fetchPostUser();
   }
 
-  void getCurrentUser() async {
+  void getCurrentUser() {
     final authCubit = context.read<AuthCubit>();
     currentUser = authCubit.currentUser;
-    isOwnPost = widget.post.userId == currentUser!.uid;
+    if (currentUser != null) {
+      isOwnPost = widget.post.userId == currentUser!.uid;
+      print('Current user: ${currentUser!.uid}, Name: ${currentUser!.name}'); // Debug
+    } else {
+      print('No current user found'); // Debug
+    }
   }
 
   Future<void> fetchPostUser() async {
@@ -69,9 +72,9 @@ class _PostTileState extends State<PostTile> {
     postCubit.toggleLikePost(widget.post.id, currentUser!.uid).catchError((e) {
       setState(() {
         if (isLiked) {
-          widget.post.likes.remove(currentUser!.uid);
-        } else {
           widget.post.likes.add(currentUser!.uid);
+        } else {
+          widget.post.likes.remove(currentUser!.uid);
         }
       });
     });
@@ -99,47 +102,24 @@ class _PostTileState extends State<PostTile> {
     );
   }
 
-  final commentTextController = TextEditingController();
-
-  void openNewCommentBox() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add a new comment'),
-        content: MyTextField(
-          controller: commentTextController,
-          hintText: 'Type a comment',
-          obscureText: false,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              addComment();
-              Navigator.of(context).pop();
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void addComment() {
+    if (currentUser == null) {
+      print('Cannot add comment: No current user');
+      return;
+    }
     final newComment = Comment(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       postId: widget.post.id,
-      userId: widget.post.userId,
-      userName: currentUser!.name,
+      userId: currentUser!.uid, // Sửa thành UID của người bình luận
+      userName: currentUser!.name ?? 'Unknown', // Giá trị mặc định nếu name null
       text: commentTextController.text,
       timestamp: DateTime.now(),
     );
 
     if (commentTextController.text.isNotEmpty) {
+      print('Adding comment with userName: ${newComment.userName}'); // Debug
       postCubit.addComment(widget.post.id, newComment);
+      commentTextController.clear();
     }
   }
 
@@ -185,10 +165,8 @@ class _PostTileState extends State<PostTile> {
     final difference = now.difference(postTime);
 
     if (useDateOnly) {
-      // Phương án 1: Chỉ hiển thị ngày/tháng/năm
       return "${postTime.day}/${postTime.month}/${postTime.year}";
     } else {
-      // Phương án 2: Đếm ngược thời gian
       if (difference.inDays > 30) {
         return "${postTime.day}/${postTime.month}/${postTime.year}";
       } else if (difference.inDays > 0) {
@@ -223,9 +201,7 @@ class _PostTileState extends State<PostTile> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ProfilePage(
-                  uid: widget.post.userId,
-                ),
+                builder: (context) => ProfilePage(uid: widget.post.userId),
               ),
             ),
             child: Padding(
@@ -274,7 +250,6 @@ class _PostTileState extends State<PostTile> {
               ),
             ),
           ),
-          // Status nằm trên ảnh
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
             child: Row(
@@ -314,8 +289,8 @@ class _PostTileState extends State<PostTile> {
                       GestureDetector(
                         onTap: toggleLikePost,
                         child: Icon(
-                          widget.post.likes.contains(currentUser!.uid) ? Icons.favorite : Icons.favorite_border,
-                          color: widget.post.likes.contains(currentUser!.uid) ? Colors.red : Theme.of(context).colorScheme.primary,
+                          widget.post.likes.contains(currentUser?.uid) ? Icons.favorite : Icons.favorite_border,
+                          color: widget.post.likes.contains(currentUser?.uid) ? Colors.red : Theme.of(context).colorScheme.primary,
                           size: 20,
                         ),
                       ),
@@ -334,7 +309,7 @@ class _PostTileState extends State<PostTile> {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: openNewCommentBox,
+                      onTap: viewAllComments,
                       child: Icon(
                         Icons.comment,
                         color: Theme.of(context).colorScheme.primary,
@@ -353,7 +328,7 @@ class _PostTileState extends State<PostTile> {
                 ),
                 const Spacer(),
                 Text(
-                  formatTimeDisplay(), // Sử dụng hàm formatTimeDisplay
+                  formatTimeDisplay(),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
                     fontSize: 12,
@@ -368,7 +343,6 @@ class _PostTileState extends State<PostTile> {
                 final post = state.posts.firstWhere((p) => p.id == widget.post.id);
                 if (post.comments.isNotEmpty) {
                   int showCommentCount = post.comments.length > 3 ? 3 : post.comments.length;
-
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                     child: Column(
@@ -407,15 +381,35 @@ class _PostTileState extends State<PostTile> {
                   );
                 }
               }
-
-              if (state is PostsLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is PostError) {
-                return Center(child: Text(state.message));
-              } else {
-                return const SizedBox();
-              }
+              return const SizedBox();
             },
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: commentTextController,
+                    decoration: InputDecoration(
+                      hintText: 'Write a comment...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                IconButton(
+                  onPressed: addComment,
+                  icon: Icon(
+                    Icons.send,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

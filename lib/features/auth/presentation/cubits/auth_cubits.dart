@@ -9,61 +9,56 @@ class AuthCubit extends Cubit<AuthState> {
 
   AuthCubit({required this.authRepo}) : super(AuthInitial());
 
-  // Check if user is already authenticated
   void checkAuth() async {
     final AppUser? user = await authRepo.getCurrentUser();
     if (user != null) {
       _currentUser = user;
+      print('Checked auth, user name: ${user.name}'); // Debug
       emit(Authenticated(user));
     } else {
       emit(Unauthenticated());
     }
   }
 
-  // Get current user
   AppUser? get currentUser => _currentUser;
 
-  // Login with email + password
   Future<void> loginWithEmailAndPassword(String email, String pw) async {
     emit(AuthLoading());
     try {
       final AppUser? user = await authRepo.loginWithEmailPassword(email, pw);
       if (user != null) {
         _currentUser = user;
+        print('Logged in, user name: ${user.name}'); // Debug
         emit(Authenticated(user));
       } else {
         emit(Unauthenticated());
       }
     } catch (e) {
       emit(AuthError(e.toString()));
-      await Future.delayed(
-          const Duration(seconds: 2)); // Show error for 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
       emit(Unauthenticated());
     }
   }
 
-  // Register with email + password
-  Future<void> registerWithEmailAndPassword(
-      String name, String email, String pw) async {
+  Future<void> registerWithEmailAndPassword(String name, String email, String pw) async {
     emit(AuthLoading());
     try {
       final AppUser? user = await authRepo.registerWithEmailPassword(
           email: email, password: pw, name: name);
       if (user != null) {
         _currentUser = user;
+        print('Registered, user name: ${user.name}'); // Debug
         emit(Authenticated(user));
       } else {
         emit(Unauthenticated());
       }
     } catch (e) {
       emit(AuthError(e.toString()));
-      await Future.delayed(
-          const Duration(seconds: 2)); // Show error for 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
       emit(Unauthenticated());
     }
   }
 
-  // Logout
   Future<void> logout() async {
     await authRepo.logout();
     _currentUser = null;

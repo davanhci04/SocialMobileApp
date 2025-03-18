@@ -16,20 +16,19 @@ class PostCubit extends Cubit<PostState> {
     required this.storageRepo,
   }) : super(PostsInitial());
 
-  Future<void> createPost(Post post,
-      {String? imagePath, Uint8List? imageBytes}) async {
+  Future<void> createPost(Post post, {String? imagePath, Uint8List? imageBytes}) async {
     String? imageUrl;
     try {
       if (imagePath != null) {
         emit(PostUploading());
-        imageUrl =
-            await storageRepo.uploadPostImageMobile(imagePath, post.id);
+        imageUrl = await storageRepo.uploadPostImageMobile(imagePath, post.id);
       } else if (imageBytes != null) {
         emit(PostUploading());
         imageUrl = await storageRepo.uploadPostImageWeb(imageBytes, post.id);
       }
 
       final newPost = post.copyWith(imageUrl: imageUrl);
+      print('Creating post with userName: ${newPost.userName}'); // Debug
       postRepo.createPost(newPost);
 
       fetchAllPosts();

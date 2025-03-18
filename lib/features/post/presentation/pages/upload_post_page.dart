@@ -8,7 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled/features/auth/domain/entities/app_user.dart';
 import 'package:untitled/features/auth/presentation/comoinents/my_text_field.dart';
 import 'package:untitled/features/auth/presentation/cubits/auth_cubits.dart';
-import 'package:untitled/features/auth/presentation/comoinents/my_button.dart'; // Import MyButton
+import 'package:untitled/features/auth/presentation/comoinents/my_button.dart';
 import 'package:untitled/features/post/domain/entities/post.dart';
 import 'package:untitled/features/post/presentation/cubits/post_cubit.dart';
 import 'package:untitled/features/post/presentation/cubits/post_states.dart';
@@ -22,11 +22,8 @@ class UploadPostPage extends StatefulWidget {
 
 class _UploadPostPageState extends State<UploadPostPage> {
   PlatformFile? imagePickedFile;
-
   Uint8List? webImage;
-
   final textController = TextEditingController();
-
   AppUser? currentUser;
 
   @override
@@ -35,9 +32,10 @@ class _UploadPostPageState extends State<UploadPostPage> {
     getCurrentUser();
   }
 
-  void getCurrentUser() async {
-    final authCubit = context.read<AuthCubit>(); // Sửa thành AuthCubit
+  void getCurrentUser() {
+    final authCubit = context.read<AuthCubit>();
     currentUser = authCubit.currentUser;
+    print('UploadPostPage - Current user: ${currentUser?.uid}, Name: ${currentUser?.name}'); // Debug
   }
 
   Future<void> pickImage() async {
@@ -56,18 +54,22 @@ class _UploadPostPageState extends State<UploadPostPage> {
   }
 
   void uploadPost() {
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User not logged in")),
+      );
+      return;
+    }
     if (imagePickedFile == null || textController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Both image and caption are required"),
-        ),
+        const SnackBar(content: Text("Both image and caption are required")),
       );
       return;
     }
     final newPost = Post(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       userId: currentUser!.uid,
-      userName: currentUser!.name,
+      userName: currentUser!.name ?? 'Unknown', // Giá trị mặc định nếu name null
       text: textController.text,
       imageUrl: '',
       timestamp: DateTime.now(),
@@ -75,6 +77,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
       comments: [],
     );
 
+    print('Uploading post with userName: ${newPost.userName}'); // Debug
     final postCubit = context.read<PostCubit>();
     if (kIsWeb) {
       postCubit.createPost(newPost, imageBytes: imagePickedFile?.bytes);
@@ -90,7 +93,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
   }
 
   @override
-  Widget build(BuildContext context) { // Sửa thành BuildContext context
+  Widget build(BuildContext context) {
     return BlocConsumer(
       bloc: context.read<PostCubit>(),
       listener: (context, state) {
@@ -104,12 +107,12 @@ class _UploadPostPageState extends State<UploadPostPage> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        return buildUploadPage(context); // Truyền context vào buildUploadPage
+        return buildUploadPage(context);
       },
     );
   }
 
-  Widget buildUploadPage(BuildContext context) { // Thêm tham số context
+  Widget buildUploadPage(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -140,7 +143,6 @@ class _UploadPostPageState extends State<UploadPostPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Khu vực ảnh
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -183,7 +185,6 @@ class _UploadPostPageState extends State<UploadPostPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Trường nhập caption
             MyTextField(
               controller: textController,
               hintText: "Write your caption here...",

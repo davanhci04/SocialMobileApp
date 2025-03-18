@@ -3,8 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:untitled/features/auth/domain/repos/auth_repo.dart';
 import 'package:untitled/features/auth/domain/entities/app_user.dart';
 
-import '../presentation/cubits/auth_states.dart';
-
 class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
@@ -17,14 +15,29 @@ class FirebaseAuthRepo implements AuthRepo {
       UserCredential userCredential = await firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
 
-      AppUser user = AppUser(
-        uid: userCredential.user!.uid,
-        email: email,
-        name: '',
-      );
-      return user;
+      // Lấy thông tin user từ Firestore
+      final docSnapshot = await firebaseFirestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data()!;
+        AppUser user = AppUser.fromJson(data); // Sử dụng fromJson
+        print('Login success - User name: ${user.name}'); // Debug
+        return user;
+      } else {
+        // Trường hợp không có dữ liệu trong Firestore
+        AppUser user = AppUser(
+          uid: userCredential.user!.uid,
+          email: email,
+          name: '', // Giá trị mặc định nếu không có dữ liệu
+        );
+        print('Login success but no Firestore data - User name: ${user.name}'); // Debug
+        return user;
+      }
     } catch (e) {
-      print(" Login failed: $e"); // Log lỗi để debug
+      print("Login failed: $e"); // Log lỗi để debug
       throw Exception("Login failed: $e");
     }
   }
@@ -52,12 +65,14 @@ class FirebaseAuthRepo implements AuthRepo {
             .collection('users')
             .doc(user.uid)
             .set(user.toJson());
+
+        print('Register success - User name: ${user.name}'); // Debug
         return user;
       }
 
       return null;
     } catch (e) {
-      print(" Registration failed: $e"); // Log lỗi để debug
+      print("Registration failed: $e"); // Log lỗi để debug
       throw Exception("Registration failed: $e");
     }
   }
@@ -66,8 +81,28 @@ class FirebaseAuthRepo implements AuthRepo {
   Future<AppUser?> getCurrentUser() async {
     final user = firebaseAuth.currentUser;
     if (user != null && user.email != null) {
-      return AppUser(uid: user.uid, email: user.email!.trim(), name: '');
+      // Lấy thông tin user từ Firestore
+      final docSnapshot = await firebaseFirestore
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data()!;
+        AppUser appUser = AppUser.fromJson(data); // Sử dụng fromJson
+        print('Get current user - User name: ${appUser.name}'); // Debug
+        return appUser;
+      } else {
+        AppUser appUser = AppUser(
+          uid: user.uid,
+          email: user.email!.trim(),
+          name: '', // Giá trị mặc định nếu không có dữ liệu
+        );
+        print('Get current user but no Firestore data - User name: ${appUser.name}'); // Debug
+        return appUser;
+      }
     } else {
+      print('No current user found'); // Debug
       return null;
     }
   }
@@ -75,5 +110,6 @@ class FirebaseAuthRepo implements AuthRepo {
   @override
   Future<void> logout() async {
     await firebaseAuth.signOut();
+    print('Logged out'); // Debug
   }
 }
