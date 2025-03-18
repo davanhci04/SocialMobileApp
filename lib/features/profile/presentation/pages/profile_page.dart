@@ -24,11 +24,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Cubit
   late final authCubit = context.read<AuthCubit>();
   late final profileCubit = context.read<ProfileCubit>();
 
-  // Current user
   late AppUser? currentUser = authCubit.currentUser;
 
   int postCount = 0;
@@ -41,194 +39,180 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void followButtonPressed() {
     final profileState = profileCubit.state;
-    if (profileState is! ProfileLoaded) {
-      return;
-    }
+    if (profileState is! ProfileLoaded) return;
+
     final profileUser = profileState.profileUser;
     final isFollowing = profileUser.followers.contains(currentUser!.uid);
+
     setState(() {
-      if (isFollowing) {
-        profileUser.followers.remove(currentUser!.uid);
-      } else {
-        profileUser.followers.add(currentUser!.uid);
-      }
+      isFollowing ? profileUser.followers.remove(currentUser!.uid) : profileUser.followers.add(currentUser!.uid);
     });
+
     profileCubit.toggleFollow(currentUser!.uid, widget.uid).catchError((e) {
       setState(() {
-        if (isFollowing) {
-          profileUser.followers.add(currentUser!.uid);
-        } else {
-          profileUser.followers.remove(currentUser!.uid);
-        }
+        isFollowing ? profileUser.followers.add(currentUser!.uid) : profileUser.followers.remove(currentUser!.uid);
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isOwnPost = widget.uid == currentUser!.uid;
+    bool isOwnProfile = widget.uid == currentUser!.uid;
+
     return BlocBuilder<ProfileCubit, ProfileState>(builder: (context, state) {
-      //loaded
       if (state is ProfileLoaded) {
-        // get loaded user
         final user = state.profileUser;
         return Scaffold(
           appBar: AppBar(
-            title: Text(user.name),
-            foregroundColor: Theme.of(context).colorScheme.primary,
+            title: Text(user.name, style: TextStyle(fontWeight: FontWeight.bold)),
             centerTitle: true,
             actions: [
-              //edit profile button
-              if (isOwnPost)
+              if (isOwnProfile)
                 IconButton(
-                    onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  EditProfilePage(user: user)),
-                        ),
-                    icon: const Icon(Icons.settings))
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EditProfilePage(user: user)),
+                  ),
+                  icon: const Icon(Icons.settings),
+                )
             ],
           ),
-          // body
-          body: ListView(
-            children: [
-              Center(
-                  child: Text(
-                user.email,
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              )),
-              const SizedBox(height: 20),
-              // profile image
-              Container(
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
-                  height: 120,
-                  width: 120,
-                  padding: const EdgeInsets.all(25),
-                  child: Center(
-                    child: Icon(
-                      Icons.person,
-                      size: 72,
-                      color: Theme.of(context).colorScheme.primary,
+                    gradient: LinearGradient(
+                      colors: [Colors.blueAccent, Colors.cyanAccent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  )),
-              // bio
-              const SizedBox(height: 20),
-
-              BlocBuilder<PostCubit, PostState>(
-                builder: (context, state) {
-                  if (state is PostsLoaded) {
-                    final userPosts = state.posts
-                        .where((p) => p.userId == widget.uid)
-                        .toList();
-                    postCount = userPosts.length;
-                  }
-                  return ProfileStats(
-                    postCount: postCount,
-                    followerCount: user.followers.length,
-                    followingCount: user.following.length,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FollowerPage(
-                          followers: user.followers,
-                          following: user.following,
+                  ),
+                  padding: const EdgeInsets.only(top: 30, bottom: 20),
+                  child: Column(
+                    children: [
+                      // Avatar với viền sáng
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(colors: [Colors.white, Colors.blueAccent]),
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.white,
+                          child: Icon(Icons.person, size: 60, color: Colors.blueAccent),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
+                      const SizedBox(height: 10),
+                      // Email
+                      Text(user.email, style: const TextStyle(color: Colors.white, fontSize: 16)),
+                      const SizedBox(height: 10),
 
-              if (!isOwnPost)
-                FollowButton(
-                  onPressed: followButtonPressed,
-                  isFollowing: user.followers.contains(currentUser!.uid),
+                      // Thống kê profile
+                      BlocBuilder<PostCubit, PostState>(
+                        builder: (context, state) {
+                          if (state is PostsLoaded) {
+                            postCount = state.posts.where((p) => p.userId == widget.uid).length;
+                          }
+                          return ProfileStats(
+                            postCount: postCount,
+                            followerCount: user.followers.length,
+                            followingCount: user.following.length,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FollowerPage(
+                                  followers: user.followers,
+                                  following: user.following,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Nút Follow
+                      if (!isOwnProfile)
+                        FollowButton(
+                          onPressed: followButtonPressed,
+                          isFollowing: user.followers.contains(currentUser!.uid),
+                        ),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
                 ),
 
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.only(left: 25.0),
-                child: Row(
-                  children: [
-                    Text(
-                      "Bio",
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary),
-                    ),
-                  ],
+                // Tiểu sử (Bio)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Bio", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      const SizedBox(height: 5),
+                      BioBox(text: user.bio),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 15),
 
-              BioBox(text: user.bio),
+                // Bài đăng
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Posts", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      const SizedBox(height: 5),
+                      BlocBuilder<PostCubit, PostState>(
+                        builder: (context, state) {
+                          if (state is PostsLoaded) {
+                            final userPosts = state.posts.where((p) => p.userId == widget.uid).toList();
+                            postCount = userPosts.length;
 
-              // posts
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.only(left: 25.0, top: 10),
-                child: Row(
-                  children: [
-                    Text(
-                      "Posts",
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary),
-                    ),
-                  ],
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: postCount,
+                              itemBuilder: (context, index) {
+                                final post = userPosts[index];
+                                return Card(
+                                  elevation: 4,
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: PostTile(
+                                      post: post,
+                                      onDeletePressed: () => context.read<PostCubit>().deletePost(post.id),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }
+                          if (state is PostsLoading) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          return const Center(child: Text('No posts available.'));
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              BlocBuilder<PostCubit, PostState>(
-                builder: (context, state) {
-                  if (state is PostsLoaded) {
-                    final userPosts = state.posts
-                        .where((p) => p.userId == widget.uid)
-                        .toList();
-                    postCount = userPosts.length;
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: postCount,
-                      itemBuilder: (context, index) {
-                        final post = userPosts[index];
-                        return PostTile(
-                          post: post,
-                          onDeletePressed: () =>
-                              context.read<PostCubit>().deletePost(post.id),
-                        );
-                      },
-                    );
-                  }
-
-                  if (state is PostsLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else {
-                    return const Center(child: Text('No posts...'));
-                  }
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }
 
-      //loading...
-      else if (state is ProfileLoading) {
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      } else {
-        return const Center(
-          child: Text('No profile found'),
-        );
+      // Loading...
+      if (state is ProfileLoading) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
+
+      return const Scaffold(body: Center(child: Text('No profile found')));
     });
   }
 }

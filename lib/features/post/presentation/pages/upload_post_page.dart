@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled/features/auth/domain/entities/app_user.dart';
 import 'package:untitled/features/auth/presentation/comoinents/my_text_field.dart';
 import 'package:untitled/features/auth/presentation/cubits/auth_cubits.dart';
+import 'package:untitled/features/auth/presentation/comoinents/my_button.dart'; // Import MyButton
 import 'package:untitled/features/post/domain/entities/post.dart';
 import 'package:untitled/features/post/presentation/cubits/post_cubit.dart';
 import 'package:untitled/features/post/presentation/cubits/post_states.dart';
@@ -35,7 +36,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
   }
 
   void getCurrentUser() async {
-    final authCubit = context.read<AuthCubit>();
+    final authCubit = context.read<AuthCubit>(); // Sửa thành AuthCubit
     currentUser = authCubit.currentUser;
   }
 
@@ -89,7 +90,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { // Sửa thành BuildContext context
     return BlocConsumer(
       bloc: context.read<PostCubit>(),
       listener: (context, state) {
@@ -103,38 +104,92 @@ class _UploadPostPageState extends State<UploadPostPage> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        return buildUploadPage();
+        return buildUploadPage(context); // Truyền context vào buildUploadPage
       },
     );
   }
 
-  Widget buildUploadPage() {
+  Widget buildUploadPage(BuildContext context) { // Thêm tham số context
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Create Post"),
-        foregroundColor: Theme.of(context).colorScheme.primary,
+        title: Text(
+          "Create Post",
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.inversePrimary,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         actions: [
-          IconButton(
-            onPressed: uploadPost,
-            icon: const Icon(Icons.upload),
-          )
+          Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: MyButton(
+              onTap: uploadPost,
+              text: "Upload",
+            ),
+          ),
         ],
       ),
-      body: Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (kIsWeb && webImage != null) Image.memory(webImage!),
-            if (!kIsWeb && imagePickedFile != null) Image.file(File(imagePickedFile!.path!)),
-            MaterialButton(
-              onPressed: pickImage,
-              color: Colors.blue,
-              child: const Text('Pick Image'),
+            // Khu vực ảnh
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                child: Stack(
+                  children: [
+                    if (kIsWeb && webImage != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.memory(webImage!, fit: BoxFit.cover, width: double.infinity, height: 300),
+                      )
+                    else if (!kIsWeb && imagePickedFile != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(File(imagePickedFile!.path!), fit: BoxFit.cover, width: double.infinity, height: 300),
+                      )
+                    else
+                      Center(
+                        child: Icon(
+                          Icons.image,
+                          size: 100,
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                        ),
+                      ),
+                    Positioned(
+                      bottom: 10,
+                      right: 10,
+                      child: MyButton(
+                        onTap: pickImage,
+                        text: "Pick Image",
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 20),
+            // Trường nhập caption
             MyTextField(
               controller: textController,
-              hintText: 'Cation',
+              hintText: "Write your caption here...",
               obscureText: false,
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

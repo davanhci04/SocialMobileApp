@@ -33,6 +33,9 @@ class _PostTileState extends State<PostTile> {
 
   ProfileUser? postUser;
 
+
+  bool useDateOnly = false;
+
   @override
   void initState() {
     super.initState();
@@ -130,13 +133,73 @@ class _PostTileState extends State<PostTile> {
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       postId: widget.post.id,
       userId: widget.post.userId,
-      userName: widget.post.userName,
+      userName: currentUser!.name,
       text: commentTextController.text,
       timestamp: DateTime.now(),
     );
 
     if (commentTextController.text.isNotEmpty) {
       postCubit.addComment(widget.post.id, newComment);
+    }
+  }
+
+  void viewAllComments() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('All Comments'),
+        content: BlocBuilder<PostCubit, PostState>(
+          builder: (context, state) {
+            if (state is PostsLoaded) {
+              final post = state.posts.firstWhere((p) => p.id == widget.post.id);
+              if (post.comments.isNotEmpty) {
+                return SizedBox(
+                  width: double.maxFinite,
+                  height: 300,
+                  child: ListView.builder(
+                    itemCount: post.comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = post.comments[index];
+                      return CommentTile(comment: comment);
+                    },
+                  ),
+                );
+              }
+            }
+            return const Center(child: Text('No comments available'));
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String formatTimeDisplay() {
+    final now = DateTime.now();
+    final postTime = widget.post.timestamp;
+    final difference = now.difference(postTime);
+
+    if (useDateOnly) {
+      // Phương án 1: Chỉ hiển thị ngày/tháng/năm
+      return "${postTime.day}/${postTime.month}/${postTime.year}";
+    } else {
+      // Phương án 2: Đếm ngược thời gian
+      if (difference.inDays > 30) {
+        return "${postTime.day}/${postTime.month}/${postTime.year}";
+      } else if (difference.inDays > 0) {
+        return "${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago";
+      } else if (difference.inHours > 0) {
+        return "${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago";
+      } else if (difference.inMinutes > 0) {
+        return "${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago";
+      } else {
+        return "just now";
+      }
     }
   }
 
@@ -148,9 +211,13 @@ class _PostTileState extends State<PostTile> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.secondary,
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.all(8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
             onTap: () => Navigator.push(
@@ -168,20 +235,21 @@ class _PostTileState extends State<PostTile> {
                 children: [
                   postUser?.profileImageUrl != null
                       ? CachedNetworkImage(
-                          imageUrl: postUser!.profileImageUrl,
-                          errorWidget: (context, url, error) => const Icon(Icons.person),
-                          imageBuilder: (context, imageProvider) => Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        )
+                    imageUrl: postUser!.profileImageUrl,
+                    errorWidget: (context, url, error) => const Icon(Icons.person),
+                    imageBuilder: (context, imageProvider) => Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1),
+                      ),
+                    ),
+                  )
                       : const Icon(Icons.person),
                   const SizedBox(width: 10),
                   Text(
@@ -189,6 +257,7 @@ class _PostTileState extends State<PostTile> {
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.inversePrimary,
                       fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
                   const Spacer(),
@@ -198,26 +267,48 @@ class _PostTileState extends State<PostTile> {
                       child: Icon(
                         Icons.delete,
                         color: Theme.of(context).colorScheme.primary,
+                        size: 20,
                       ),
                     ),
                 ],
               ),
             ),
           ),
-          CachedNetworkImage(
-            imageUrl: widget.post.imageUrl,
-            height: 430,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => const SizedBox(height: 430),
-            errorWidget: (context, url, error) => const Icon(Icons.error),
+          // Status nằm trên ảnh
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.post.text,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: CachedNetworkImage(
+              imageUrl: widget.post.imageUrl,
+              height: 400,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => const SizedBox(height: 400),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
+            ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
                 SizedBox(
-                  width: 50,
+                  width: 60,
                   child: Row(
                     children: [
                       GestureDetector(
@@ -225,6 +316,7 @@ class _PostTileState extends State<PostTile> {
                         child: Icon(
                           widget.post.likes.contains(currentUser!.uid) ? Icons.favorite : Icons.favorite_border,
                           color: widget.post.likes.contains(currentUser!.uid) ? Colors.red : Theme.of(context).colorScheme.primary,
+                          size: 20,
                         ),
                       ),
                       const SizedBox(width: 5),
@@ -238,6 +330,7 @@ class _PostTileState extends State<PostTile> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 20),
                 Row(
                   children: [
                     GestureDetector(
@@ -245,6 +338,7 @@ class _PostTileState extends State<PostTile> {
                       child: Icon(
                         Icons.comment,
                         color: Theme.of(context).colorScheme.primary,
+                        size: 20,
                       ),
                     ),
                     const SizedBox(width: 5),
@@ -258,22 +352,13 @@ class _PostTileState extends State<PostTile> {
                   ],
                 ),
                 const Spacer(),
-                Text(widget.post.timestamp.toString()),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-            child: Row(
-              children: [
                 Text(
-                  widget.post.userName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                  formatTimeDisplay(), // Sử dụng hàm formatTimeDisplay
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                    fontSize: 12,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Text(widget.post.text),
               ],
             ),
           ),
@@ -282,15 +367,43 @@ class _PostTileState extends State<PostTile> {
               if (state is PostsLoaded) {
                 final post = state.posts.firstWhere((p) => p.id == widget.post.id);
                 if (post.comments.isNotEmpty) {
-                  int showCommentCount = post.comments.length;
+                  int showCommentCount = post.comments.length > 3 ? 3 : post.comments.length;
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: showCommentCount,
-                    itemBuilder: (context, index) {
-                      final comment = post.comments[index];
-                      return CommentTile(comment: comment);
-                    },
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Comments',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: showCommentCount,
+                          itemBuilder: (context, index) {
+                            final comment = post.comments[index];
+                            return CommentTile(comment: comment);
+                          },
+                        ),
+                        if (post.comments.length > 3)
+                          TextButton(
+                            onPressed: viewAllComments,
+                            child: Text(
+                              'View all comments',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   );
                 }
               }

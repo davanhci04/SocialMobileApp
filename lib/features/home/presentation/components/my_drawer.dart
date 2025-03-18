@@ -51,8 +51,8 @@ class MyDrawer extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (context) => ProfilePage(
-                                uid: uid,
-                              )));
+                            uid: uid,
+                          )));
                 },
               ),
 

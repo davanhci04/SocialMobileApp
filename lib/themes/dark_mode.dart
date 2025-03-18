@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 
 ThemeData darkMode = ThemeData(
   colorScheme: ColorScheme.dark(
-    // very dark - app bar + drawer color
-    surface: Color.fromARGB(255, 9, 9, 9),
-    // slightly light
-    primary: Color.fromARGB(255, 105, 105, 105),
-    // dark
-    secondary: Color.fromARGB(255, 20, 20, 20),
-    // slightly dark
-    tertiary: Color.fromARGB(255, 29, 29, 29),
-    // very light
-    inversePrimary: Color.fromARGB(255, 195, 195, 195),
+    surface: const Color.fromARGB(255, 15, 15, 15),
+    primary: const Color.fromARGB(255, 169, 169, 169),
+    secondary: const Color.fromARGB(255, 20, 20, 20),
+    tertiary: const Color.fromARGB(255, 29, 29, 29),
+    inversePrimary: const Color.fromARGB(255, 220, 220, 220),
   ),
-  scaffoldBackgroundColor: const Color.fromARGB(255, 9, 9, 9),
+  scaffoldBackgroundColor: const Color.fromARGB(255, 15, 15, 15),
+  textTheme: const TextTheme(
+    bodyMedium: TextStyle(fontSize: 14, color: Colors.white), // Giảm từ 16 xuống 14
+    headlineSmall: TextStyle(fontSize: 18, fontWeight: FontWeight.w500), // Giảm từ 20 xuống 18
+  ),
 );

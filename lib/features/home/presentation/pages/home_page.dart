@@ -32,15 +32,24 @@ class _HomePageState extends State<HomePage> {
     fetchAllPosts();
   }
 
-  //build ui
+  // Build UI
   @override
   Widget build(BuildContext context) {
-    // Scaffold
     return Scaffold(
-      // app bar
+      // AppBar
       appBar: AppBar(
-        title: const Text("Home"),
+        title: Text(
+          "Home",
+          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+            color: Theme.of(context).colorScheme.inversePrimary,
+          ),
+        ),
         centerTitle: true,
+        elevation: 4, // Thêm shadow
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         actions: [
           IconButton(
             onPressed: () => Navigator.push(
@@ -49,43 +58,64 @@ class _HomePageState extends State<HomePage> {
                 builder: (context) => const UploadPostPage(),
               ),
             ),
-            icon: Icon(Icons.add),
+            icon: Icon(
+              Icons.add,
+              color: Theme.of(context).colorScheme.inversePrimary,
+            ),
           ),
         ],
       ),
 
-      // drawer
-
+      // Drawer
       drawer: MyDrawer(),
 
-      body: BlocBuilder(
-        bloc: postCubit,
-        builder: (context, state) {
-          if (state is PostsLoading && state is PostUploading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is PostsLoaded) {
-            final allPosts = state.posts;
-            if (allPosts.isEmpty) {
-              return const Center(
-                child: Text('No posts available'),
-              );
-            }
-            return ListView.builder(
-              itemCount: allPosts.length,
-              itemBuilder: (context, index) {
-                final post = allPosts[index];
-                return PostTile(
-                  post: post,
-                  onDeletePressed: () => deletePost(post.id),
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: BlocBuilder(
+          bloc: postCubit,
+          builder: (context, state) {
+            if (state is PostsLoading && state is PostUploading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is PostsLoaded) {
+              final allPosts = state.posts;
+              if (allPosts.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No posts available',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 );
-              },
-            );
-          } else if (state is PostError) {
-            return Center(child: Text(state.message));
-          } else {
-            return const SizedBox();
-          }
-        },
+              }
+              return ListView.builder(
+                itemCount: allPosts.length,
+                itemBuilder: (context, index) {
+                  final post = allPosts[index];
+                  return Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 12.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: PostTile(
+                      post: post,
+                      onDeletePressed: () => deletePost(post.id),
+                    ),
+                  );
+                },
+              );
+            } else if (state is PostError) {
+              return Center(
+                child: Text(
+                  state.message,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+              );
+            } else {
+              return const SizedBox();
+            }
+          },
+        ),
       ),
     );
   }

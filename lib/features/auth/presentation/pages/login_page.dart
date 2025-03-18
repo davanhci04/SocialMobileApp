@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
 
   void login() {
-   // prepare email and pw for login
+    // prepare email and pw for login
     final String email = emailController.text;
     final String password = passwordController.text;
     // auth cubits
@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     }
-}
+  }
 
   @override
 
