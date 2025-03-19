@@ -28,7 +28,7 @@ class _PostTileState extends State<PostTile> {
 
   bool isOwnPost = false;
   AppUser? currentUser;
-  ProfileUser? postUser;
+  ProfileUser? postUser;//postUser
   bool useDateOnly = false;
 
   final commentTextController = TextEditingController();

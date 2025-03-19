@@ -26,13 +26,13 @@ class _CommentTileState extends State<CommentTile> {
 
   void getCurrentUser() async {
     final authCubit = context.read<AuthCubit>();
-    currentUser = authCubit.currentUser;
+    currentUser = authCubit.currentUser;//currentUser
     isOwnPost = widget.comment.userId == currentUser!.uid;
   }
 
   void showOptions() {
     showDialog(
-      context: context,
+      context: context,//context
       builder: (context) => AlertDialog(
         title: const Text('Delete Comment?'),
         actions: [

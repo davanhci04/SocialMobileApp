@@ -19,12 +19,12 @@ class Comment {
 
   Comment copyWith({String? imageUrl}) {
     return Comment(
-      id: id,
+      id: id,//commentID
       postId: postId,
       userId: userId,
       userName: userName,
       text: text,
-      timestamp: timestamp,
+      timestamp: timestamp,//Thoi gian comment
     );
   }
 

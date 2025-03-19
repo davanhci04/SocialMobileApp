@@ -41,7 +41,7 @@ class Post {
       'id': id,
       'userId': userId,
       'name': userName,
-      'text': text,
+      'text': text,//text
       'imageUrl': imageUrl,
       'timestamp': Timestamp.fromDate(timestamp),
       'likes': likes,

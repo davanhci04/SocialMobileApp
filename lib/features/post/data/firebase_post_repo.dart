@@ -14,7 +14,7 @@ class FirebasePostRepo implements PostRepo {
     try {
       await postsCollection.doc(post.id).set(post.toJson());
     } catch (e) {
-      throw Exception("Error creating post: $e");
+      throw Exception("Error creating post: $e");//error creating post
     }
   }
 
@@ -47,7 +47,7 @@ class FirebasePostRepo implements PostRepo {
       // convert firestore documents from json =-> list of posts
       final userPosts = postsSnapshot.docs.map((doc) => Post.fromJson(doc.data() as Map<String, dynamic>)).toList();
 
-      return userPosts;
+      return userPosts;//userPosts
     } catch (e) {
       throw Exception("Error fetching posts by user: $e");
     }
@@ -61,7 +61,7 @@ class FirebasePostRepo implements PostRepo {
         final post = Post.fromJson(postDoc.data() as Map<String, dynamic>);
         final hasLiked = post.likes.contains(userId);
         if (hasLiked) {
-          post.likes.remove(userId);
+          post.likes.remove(userId);//remove
         } else {
           post.likes.add(userId);
         }

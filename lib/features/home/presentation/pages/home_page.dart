@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
             color: Theme.of(context).colorScheme.inversePrimary,
           ),
         ),
-        centerTitle: true,
+        centerTitle: true,//centerTitle
         elevation: 4, // Thêm shadow
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
